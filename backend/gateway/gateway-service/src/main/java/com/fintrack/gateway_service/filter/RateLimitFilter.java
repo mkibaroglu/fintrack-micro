@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final int MAX_REQUESTS_PER_SECOND = 5; // sınır: saniyede 5 istek
+    private static final int MAX_REQUESTS_PER_SECOND = 5;
     private static final Map<String, RequestCounter> requestCounts = new ConcurrentHashMap<>();
 
     @Override
