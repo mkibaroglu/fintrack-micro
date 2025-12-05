@@ -26,8 +26,6 @@ public class Transaction {
         }
     }
 
-    // getter – setter – boş constructor
-
     public Transaction() {}
 
     public Long getId() {

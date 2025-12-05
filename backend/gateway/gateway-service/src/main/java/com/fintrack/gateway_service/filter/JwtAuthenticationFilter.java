@@ -4,13 +4,11 @@ import com.fintrack.gateway_service.dto.TokenValidationResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,6 +16,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -67,20 +67,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            validation.getUsername(),
-                            null,
-                            Collections.emptyList()
-                    );
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
+            String username = validation.getUsername();
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            HttpServletRequest wrappedRequest = new HttpServletRequestWrapper(request) {
+                @Override
+                public String getHeader(String name) {
+                    if ("X-User-Name".equalsIgnoreCase(name)) {
+                        return username;
+                    }
+                    return super.getHeader(name);
+                }
 
-            request.setAttribute("X-User-Name", validation.getUsername());
+                @Override
+                public Enumeration<String> getHeaderNames() {
+                    List<String> names = Collections.list(super.getHeaderNames());
+                    if (!names.contains("X-User-Name")) {
+                        names.add("X-User-Name");
+                    }
+                    return Collections.enumeration(names);
+                }
 
-            filterChain.doFilter(request, response);
+                @Override
+                public Enumeration<String> getHeaders(String name) {
+                    if ("X-User-Name".equalsIgnoreCase(name)) {
+                        return Collections.enumeration(List.of(username));
+                    }
+                    return super.getHeaders(name);
+                }
+            };
+
+            filterChain.doFilter(wrappedRequest, response);
 
         } catch (WebClientResponseException ex) {
             response.setStatus(ex.getStatusCode().value());
