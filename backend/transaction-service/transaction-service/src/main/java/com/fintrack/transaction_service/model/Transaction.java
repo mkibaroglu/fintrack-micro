@@ -3,6 +3,8 @@ package com.fintrack.transaction_service.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "transactions")
@@ -14,10 +16,16 @@ public class Transaction {
 
     private String username;
     private BigDecimal amount;
-    private String type;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionType type;
+
     private String description;
 
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    private Category category;
 
     @PrePersist
     public void prePersist() {
@@ -52,11 +60,11 @@ public class Transaction {
         this.amount = amount;
     }
 
-    public String getType() {
+    public TransactionType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TransactionType type) {
         this.type = type;
     }
 
@@ -74,5 +82,13 @@ public class Transaction {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

@@ -1,18 +1,34 @@
 package com.fintrack.transaction_service.dto;
 
+import com.fintrack.transaction_service.model.Category;
+import com.fintrack.transaction_service.model.TransactionType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
 import java.math.BigDecimal;
 
 public class CreateTransactionRequest {
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private TransactionType type;
     private String description;
     private BigDecimal amount;
+    @Enumerated(EnumType.STRING)
+    private Category category;
 
-    public String getType() {
+    public TransactionType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TransactionType type) {
         this.type = type;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public String getDescription() {

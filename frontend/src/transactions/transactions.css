@@ -1,0 +1,25 @@
+.tx-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Genel kart stili */
+.tx-card {
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Gider: Kırmızı */
+.tx-card.expense {
+    background: #ff6b6b;
+}
+
+/* Gelir: Yeşil */
+.tx-card.income {
+    background: #00c57d;
+}
