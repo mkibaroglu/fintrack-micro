@@ -5,45 +5,75 @@ services:
     ports:
       - "6379:6379"
 
-  auth-service:
-    build: ../backend/auth-service/auth-service
-    container_name: fintrack-auth
-    ports:
-      - "8081:8080"
-    depends_on:
-      - redis
-
-  transaction-service:
-    build: ../backend/transaction-service/transaction-service
-    container_name: fintrack-transaction
-    ports:
-      - "8082:8080"
-    depends_on:
-      - redis
-      - postgres
-
-  gateway:
-    build:
-      context: ../backend/gateway/gateway-service
-      dockerfile: Dockerfile
-    container_name: fintrack-gateway
-    ports:
-      - "8083:8080"
-    depends_on:
-      - auth-service
-      - transaction-service
-
   postgres:
     image: postgres:16-alpine
     container_name: fintrack-postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: fintrack
-      POSTGRES_USER: fintrack
-      POSTGRES_PASSWORD: fintrack
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  fintrack-config:
+    build: ../backend/config-server/config-server
+    container_name: fintrack-config
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../config-repo:/config-repo
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8888/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth-service:
+    build: ../backend/auth-service/auth-service
+    container_name: fintrack-auth
+    env_file:
+      - .env
+    ports:
+      - "8081:8080"
+    depends_on:
+      fintrack-config:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+
+  transaction-service:
+    build: ../backend/transaction-service/transaction-service
+    container_name: fintrack-transaction
+    env_file:
+      - .env
+    ports:
+      - "8082:8080"
+    depends_on:
+      fintrack-config:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+
+  gateway:
+    build: ../backend/gateway/gateway-service
+    container_name: fintrack-gateway
+    env_file:
+      - .env
+    ports:
+      - "8083:8080"
+    depends_on:
+      fintrack-config:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      transaction-service:
+        condition: service_started
 
 volumes:
   postgres-data:

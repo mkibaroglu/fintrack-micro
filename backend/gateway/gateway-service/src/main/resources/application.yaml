@@ -1,23 +1,5 @@
-server:
-  port: 8080
-
 spring:
   application:
     name: gateway-service
-
-  cloud:
-    gateway:
-      mvc:
-        routes:
-          - id: auth-service
-            uri: http://fintrack-auth:8080
-            predicates:
-              - Path=/api/auth/**
-          - id: transaction-service
-            uri: http://fintrack-transaction:8080
-            predicates:
-              - Path=/api/transactions/**
-
-app:
-  jwt:
-    secret: "super-secret-key-fintrack-1234567890"
+  config:
+    import: "configserver:http://fintrack-config:8888"

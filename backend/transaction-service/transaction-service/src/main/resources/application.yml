@@ -1,20 +1,5 @@
-server:
-  port: 8080
-
 spring:
   application:
     name: transaction-service
-
-  datasource:
-    url: jdbc:postgresql://fintrack-postgres:5432/fintrack
-    username: fintrack
-    password: fintrack
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  config:
+    import: "configserver:http://fintrack-config:8888"

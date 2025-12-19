@@ -4,12 +4,16 @@ import com.fintrack.auth_service.dto.*;
 import com.fintrack.auth_service.exception.BusinessException;
 import com.fintrack.auth_service.model.User;
 import com.fintrack.auth_service.repository.UserRepository;
-import com.fintrack.auth_service.service.JwtService;
+import com.fintrack.auth_service.security.JwtService;
+import com.fintrack.auth_service.security.TokenBlacklistService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,13 +22,15 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthController(JwtService jwtService,
                           UserRepository userRepository,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder, TokenBlacklistService tokenBlacklistService) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @GetMapping("/hello")
@@ -99,5 +105,22 @@ public class AuthController {
         String token = jwtService.generateToken(user.getUsername());
 
         return new LoginResponse(token);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorization) {
+        String token = extractBearer(authorization);
+        String jti = jwtService.getJti(token);
+        Instant exp = jwtService.getExpiration(token);
+
+        tokenBlacklistService.blacklistJti(jti, exp);
+        return ResponseEntity.ok().build();
+    }
+
+    private String extractBearer(String header) {
+        if (header == null || !header.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing Bearer token");
+        }
+        return header.substring("Bearer ".length()).trim();
     }
 }
